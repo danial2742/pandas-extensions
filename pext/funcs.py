@@ -67,15 +67,35 @@ def flatten_json_column(df, column_name, prefix=None, skip_columns_list=None):
 
 
 @extension
-def create_column(df, column_name, val_or_row_mapper_func):
+def create_column_from_df(df, column_name, df_mapper_func):
+    if not callable(df_mapper_func):
+        raise ValueError('Callable is expected.')
+    df[column_name] = df_mapper_func(df)
+    return df
+
+
+@extension
+def create_column_from_value(df, column_name, value):
+    df[column_name] = value
+    return df
+
+
+@extension
+def create_column_from_row(df, column_name, row_mapper_func):
+    if not callable(row_mapper_func):
+        raise ValueError('Callable is expected.')
     if df.empty:
         df[column_name] = None
         return df
-    if callable(val_or_row_mapper_func):
-        df[column_name] = df.apply(val_or_row_mapper_func, axis=1)
-    else:
-        df[column_name] = val_or_row_mapper_func
+    df[column_name] = df.apply(row_mapper_func, axis=1)
     return df
+
+
+@extension
+def create_column(df, column_name, val_or_row_mapper_func):
+    if callable(val_or_row_mapper_func):
+        return create_column_from_row(df, column_name, val_or_row_mapper_func)
+    return create_column_from_value(df, column_name, val_or_row_mapper_func)
 
 
 @extension
