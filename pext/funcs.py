@@ -81,6 +81,12 @@ def create_column_from_value(df, column_name, value):
 
 
 @extension
+def change_column_types(df, columns_list, target_type):
+    df[columns_list] = df[columns_list].astype(target_type)
+    return df
+
+
+@extension
 def create_column_from_row(df, column_name, row_mapper_func):
     if not callable(row_mapper_func):
         raise ValueError('Callable is expected.')
