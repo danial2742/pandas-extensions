@@ -21,7 +21,7 @@ def skip_columns(df, column_names):
     :param df Target data frame
     :param column_names List of column names to work with
     """
-    return df[df.columns.difference(column_names)]
+    return df.drop(columns=column_names, errors='ignore')
 
 
 @extension
@@ -51,20 +51,12 @@ def flatten_json_column(df, column_name, prefix=None, skip_columns_list=None):
     """
     if prefix is None:
         prefix = column_name + '_'
-
     non_null_rows = df[~pd.isnull(df[column_name])]
-    flattened_column_data = non_null_rows[column_name]\
-        .apply(pd.Series)
-    # The line above sometimes has different result types(!), so we unify them
-    if isinstance(flattened_column_data, pd.Series):
-        flattened_column_data = flattened_column_data.to_frame()
-
+    flattened_column_data = pd.DataFrame.from_dict(non_null_rows[column_name].to_dict()).T
     if skip_columns_list:
-        flattened_column_data = skip_columns(flattened_column_data, skip_columns_list)
-
-    # add prefix to the column data
+        flattened_column_data = flattened_column_data.drop(columns=skip_columns_list)
     flattened_column_data.columns = ['%s%s' % (prefix, c) for c in flattened_column_data.columns]
-    return skip_columns(df, [column_name]) \
+    return df.drop(columns=column_name) \
         .join(flattened_column_data)
 
 
@@ -84,8 +76,9 @@ def create_column_from_value(df, column_name, value):
 
 @extension
 def change_column_types(df, columns_list, target_type):
-    df[columns_list] = df[columns_list].astype(target_type)
-    return df
+    return set_column_types(df, {
+        col: target_type for col in columns_list
+    })
 
 
 @extension
@@ -113,10 +106,7 @@ def set_column_types(df, name_to_type_dict):
     :param name_to_type_dict: column name to column type dictionary
     :return: pandas DataFrame with column types set
     """
-    for col_name in list(name_to_type_dict.keys()):
-        col_type = name_to_type_dict[col_name]
-        df[col_name] = df[col_name].astype(col_type)
-    return df
+    return df.astype(name_to_type_dict)
 
 
 @extension
