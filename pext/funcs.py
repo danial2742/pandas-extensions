@@ -1,3 +1,5 @@
+from builtins import filter
+from past.builtins import basestring
 import functools
 from collections import OrderedDict
 
@@ -111,7 +113,7 @@ def set_column_types(df, name_to_type_dict):
     :param name_to_type_dict: column name to column type dictionary
     :return: pandas DataFrame with column types set
     """
-    for col_name in name_to_type_dict.keys():
+    for col_name in list(name_to_type_dict.keys()):
         col_type = name_to_type_dict[col_name]
         df[col_name] = df[col_name].astype(col_type)
     return df
@@ -164,9 +166,9 @@ def filter_columns(df, columns_predicate):
     Returns pd.Series containing only columns that matched the columns_predicate.
     """
     if isinstance(columns_predicate, basestring):
-        columns = filter(lambda col: columns_predicate in col, df.columns)
+        columns = [col for col in df.columns if columns_predicate in col]
     else:
-        columns = filter(columns_predicate, df.columns)
+        columns = list(filter(columns_predicate, df.columns))
     return df[columns]
 
 
